@@ -1,5 +1,6 @@
 import express from "express";
 import type {Request, Response} from "express";
+import {errorHandler} from "./middlewares/errorHandler.ts";
 
 const app = express();
 
@@ -11,5 +12,7 @@ app.get('/healthcheck', (req: Request, res: Response) => {
         ping: "pong"
     });
 });
+
+app.use(errorHandler);
 
 export default app;
