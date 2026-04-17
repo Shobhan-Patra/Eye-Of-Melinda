@@ -13,6 +13,10 @@ app.get('/healthcheck', (req: Request, res: Response) => {
     });
 });
 
+import imageHandlerRouter from "./routes/imageHandler.ts";
+
+app.use('/api', imageHandlerRouter);
+
 app.use(errorHandler);
 
 export default app;
