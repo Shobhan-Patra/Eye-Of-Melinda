@@ -3,9 +3,9 @@ import {ApiResponse} from "../utils/apiResponse.ts";
 import getHash from "../utils/fileHasher.ts";
 import {Storage} from '@google-cloud/storage';
 import {ApiError} from "../utils/apiError.ts";
-
-// const MAX_FILE_SIZE_BYTES = 40 * 1024 * 1024;
-
+import {db} from "../db/db.ts";
+import imageProcessingJobQueue from "../queue/queue.ts";
+import {uuid as v4} from "uuidv4";
 const bucketName = process.env.BUCKET_NAME!;
 
 // Creates a client
@@ -32,7 +32,7 @@ async function getSignedDownloadURL(imageHash: string) {
 
 async function uploadFile(fileName: string) {
     const filePath = `uploads/${fileName}`;
-    const destinationFileName = await getHash(filePath);
+    const destinationFileName = await getHash(filePath); // hash the image file to reduce redundant checks later
 
     const options = {
         destination: destinationFileName!,
@@ -42,22 +42,48 @@ async function uploadFile(fileName: string) {
     console.log(`${filePath} uploaded to ${bucketName}`);
 }
 
-// uploadFile().catch(console.error);
-
 const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
     if (!req.file?.filename) {
         throw new ApiError(404, `No file provided`);
     }
 
     try {
+        // update image metadata in DB
+        const imageHash = await getHash('uploads/' + req.file.filename) || "";
+
+        const existingImage = await db.execute('SELECT * FROM images WHERE hash_value = ?', [imageHash]);
+
+        if (existingImage.rows.length > 0) {
+
+            if (!existingImage.rows[0]?.caption) {
+                return res
+                    .status(202)
+                    .json(new ApiResponse(202, null, "Image is being processed. Retry later"));
+            }
+
+            return res
+                .status(200)
+                .json(new ApiResponse(200, {caption: existingImage.rows[0]?.caption},
+                    "Retrieved from DB (Previously processed image)"
+                )
+            );
+        }
+
+        // upload file to GCS
         await uploadFile(req.file.filename);
 
-        return res.status(200).json(new ApiResponse(200,
-            {
-                "filename": req.file?.filename
-            },
-            "Image uploaded successfully")
-        );
+        const imageId = v4();
+        const imageUrl = await getSignedDownloadURL(imageHash);
+
+        // update DB
+        await db.execute(`INSERT INTO images (id, hash_value, url) VALUES (?, ?, ?); `, [imageId, imageHash, imageUrl]);
+
+        await imageProcessingJobQueue.add(imageHash, {
+            image: req.file,
+        });
+        console.log(`${imageHash} (${req.file.filename}) is sent to processing queue`);
+
+        return res.status(200).json(new ApiResponse(200, imageHash, "Image is being processed"));
     } catch (error) {
         console.log(error);
         next(error);

@@ -10,9 +10,11 @@ const connection = {
 
 const imageProcessingJobQueue = new Queue("image-processing-jobs", { connection });
 
-async function addJobs() {
-    await imageProcessingJobQueue.add('Image1', {name: "Image1"})
-    await imageProcessingJobQueue.add('Image2', {name: "Image2"})
-}
+// async function addJobs() {
+//     await imageProcessingJobQueue.add('Image1', {name: "Image1"})
+//     await imageProcessingJobQueue.add('Image2', {name: "Image2"})
+// }
+//
+// await addJobs();
 
-await addJobs();
+export default imageProcessingJobQueue;
