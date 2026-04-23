@@ -91,10 +91,18 @@ const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
         await db.execute(`INSERT INTO images (id, hash_value, url) VALUES (?, ?, ?); `, [newImage.id, newImage.hash_value, newImage.url]);
 
         // add new job to processing queue
-        const job = await imageProcessingJobQueue.add("captioning", {
+        const job = await imageProcessingJobQueue.add("captioning",
+        {
             newImage
         },
-            { jobId: newImage.hash_value } // To prevent duplicate jobs
+        {
+            jobId: newImage.hash_value, // To prevent duplicate jobs
+            attempts: 3,
+            backoff: {
+                type: "exponential",
+                delay: 1000
+            }
+        }
         );
         // console.log(`${newImage.hash_value} (${file.filename}) is sent to processing queue`);
 
