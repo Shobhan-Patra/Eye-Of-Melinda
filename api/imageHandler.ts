@@ -39,7 +39,7 @@ async function uploadFile(fileName: string) {
     };
 
     await storage.bucket(bucketName).upload(filePath, options);
-    console.log(`${filePath} uploaded to ${bucketName}`);
+    // console.log(`${filePath} uploaded to ${bucketName}`);
 }
 
 const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
@@ -52,7 +52,6 @@ const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
         // Compute image hash
         const localImagePath = path.join('uploads', file.filename);
         const imageHash = await getHash(localImagePath) || "";
-        const extName = path.extname(file.filename);
 
         const { rows } = await db.execute('SELECT id, caption FROM images WHERE hash_value = ?', [imageHash]);
         const existingImage = rows[0];
@@ -77,29 +76,35 @@ const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
         }
 
         // New Image
-        await uploadFile(req.file.filename); // upload file to GCS
+        await uploadFile(file.filename); // upload file to GCS
 
-        const imageId = v4();
-        const imageUrl = await getSignedDownloadURL(imageHash, path.extname(file.filename));
-
-        // update DB
-        await db.execute(`INSERT INTO images (id, hash_value, url) VALUES (?, ?, ?); `, [imageId, imageHash, imageUrl]);
-
-        const job = await imageProcessingJobQueue.add("captioning",
-            { image: file, imageUrl, imageHash },
-            { jobId: imageHash } // To prevent duplicate jobs
-        );
-        console.log(`${imageHash} (${file.filename}) is sent to processing queue`);
+        const newImage = {
+            id: v4(),
+            name: file.filename,
+            hash_value: imageHash,
+            url: await getSignedDownloadURL(imageHash, path.extname(file.filename))
+        }
 
         fs.unlinkSync(localImagePath); // delete local image
 
+        // update DB
+        await db.execute(`INSERT INTO images (id, hash_value, url) VALUES (?, ?, ?); `, [newImage.id, newImage.hash_value, newImage.url]);
+
+        // add new job to processing queue
+        const job = await imageProcessingJobQueue.add("captioning", {
+            newImage
+        },
+            { jobId: newImage.hash_value } // To prevent duplicate jobs
+        );
+        // console.log(`${newImage.hash_value} (${file.filename}) is sent to processing queue`);
+
         return res.status(202).json(new ApiResponse(200, {
-            imageHash: imageHash,
+            image: newImage,
             jobId: job.id
         }, "Image sent to processing queue"));
 
     } catch (error) {
-        console.log(error);
+        console.error(error);
         next(error);
     }
 }

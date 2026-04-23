@@ -14,8 +14,10 @@ app.get('/healthcheck', (req: Request, res: Response) => {
 });
 
 import imageHandlerRouter from "./routes/imageHandler.ts";
+import statusHandler from "./routes/status.ts";
 
-app.use('/api', imageHandlerRouter);
+app.use('/api/v1', imageHandlerRouter);
+app.use('/api/v1', statusHandler);
 
 app.use(errorHandler);
 
