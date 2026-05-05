@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {SSEHandler} from "../api/SSEHandler.ts";
+import {SSEHandler} from "../api/SSEHandler.js";
 
 const router = Router();
 

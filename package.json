@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "node --watch --env-file=.env server.ts",
     "worker": "node --watch --env-file=.env queue/worker.ts",
-    "testQueue": "node --watch --env-file=.env queue/queue.ts"
+    "testQueue": "node --watch --env-file=.env queue/queue.ts",
+    "build": "tsc",
+    "start:server": "node dist/server.ts",
+    "start:worker": "node dist/worker.ts"
   },
   "keywords": [],
   "author": "",
@@ -17,11 +20,13 @@
     "@libsql/client": "^0.17.2",
     "axios": "^1.15.2",
     "bullmq": "^5.73.0",
+    "cors": "^2.8.6",
     "express": "^5.2.1",
     "multer": "^2.1.1",
     "uuidv4": "^6.2.13"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",
     "@types/node": "^25.6.0",

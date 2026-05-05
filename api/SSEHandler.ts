@@ -1,12 +1,18 @@
-import {QueueEvents} from "bullmq";
+import {Queue, QueueEvents} from "bullmq";
 import type {NextFunction, Response, Request} from "express";
-import {connection} from "../config/queueConnection.ts";
+import {connection} from "../config/queueConnection.js";
+import {ApiError} from "../utils/apiError.js";
 
 const queueEvents = new QueueEvents("image-processing-jobs", {connection});
+const imageQueue = new Queue("image-processing-jobs", {connection});
 
 // Handles Server Sent Events
 const SSEHandler = async function (req: Request, res: Response, next: NextFunction) {
     const { jobId } = req.params;
+
+    if (!jobId || typeof jobId !== "string") {
+        throw new ApiError(400, "No jobId provided");
+    }
 
     // Standard SSE headers
     res.setHeader('Content-Type', 'text/event-stream');
@@ -16,6 +22,16 @@ const SSEHandler = async function (req: Request, res: Response, next: NextFuncti
     const sendUpdate = (data: any) => {
         res.write(`data: ${JSON.stringify(data)}\n\n`);
     }
+
+    const finishedJob = await imageQueue.getJob(jobId);
+    if (finishedJob) {
+        const state = await finishedJob.getState() || "";
+        if (state === "completed") {
+            sendUpdate({ status: "completed", result: finishedJob.data });
+            cleanup();
+        }
+    }
+
 
     // Listen for BullMQ completion
     const onCompleted = ({ jobId: id, returnvalue }: { jobId: string, returnvalue: any }) => {
@@ -32,7 +48,7 @@ const SSEHandler = async function (req: Request, res: Response, next: NextFuncti
         }
     };
 
-    const cleanup = () => {
+    function cleanup(){
         queueEvents.off("completed", onCompleted);
         queueEvents.off("failed", onFailed);
         res.end();

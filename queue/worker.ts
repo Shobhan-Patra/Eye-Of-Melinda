@@ -1,7 +1,7 @@
 import { Worker } from "bullmq";
 import axios from "axios";
-import {connection} from "../config/queueConnection.ts";
-import {db} from "../db/db.ts";
+import {connection} from "../config/queueConnection.js";
+import {db} from "../db/db.js";
 
 const MODEL_SERVICE_URL = process.env.MODEL_SERVICE_URL!;
 
@@ -16,12 +16,8 @@ const worker = new Worker("image-processing-jobs", async (job) => {
 
     try {
         const response = await axios.post(MODEL_SERVICE_URL,
-            {
-                image_url: newImage.url
-            },
-            {
-                timeout: 30000 // 30s timeout for ML model
-            }
+            { image_url: newImage.url },
+            { timeout: 30000 } // 30s timeout for ML model
         );
 
         const CapitalizedCaption = capitalize(response.data?.caption);
@@ -40,12 +36,11 @@ const worker = new Worker("image-processing-jobs", async (job) => {
     }
 
 
-}, { connection, concurrency: 5 });
-
-// worker.on("completed", (job) => {
-//     console.log("Completed: ", job.id);
-// })
-//
-// worker.on("failed", (job, err) => {
-//     console.error("Failed: ", err.message);
-// })
+}, {
+    connection,
+    concurrency: 5,
+    limiter: {
+        max: 10,
+        duration: 1000
+    }
+});

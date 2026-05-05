@@ -1,7 +1,7 @@
 import multer from "multer";
 import type {Request} from "express";
 import path from "path";
-import {ApiError} from "../utils/apiError.ts";
+import {ApiError} from "../utils/apiError.js";
 
 const storage = multer.diskStorage({
     destination: function (req: Request, file, cb) {
@@ -31,6 +31,6 @@ const upload = multer({
         throw new ApiError(400, "Only image types under 10MB are allowed!");
         cb(new Error("Error: File upload only supports the following filetypes - " + filetypes));
     }
-}).single("myImage");
+}).single("image");
 
 export default upload;

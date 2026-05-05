@@ -1,6 +1,6 @@
 import type {Request, Response, NextFunction} from 'express';
-import upload from "../config/multer.ts";
-import {ApiError} from "../utils/apiError.ts";
+import upload from "../config/multer.js";
+import {ApiError} from "../utils/apiError.js";
 import multer from "multer";
 
 export function uploadMiddleware(req: Request, res: Response, next: NextFunction) {

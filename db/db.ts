@@ -1,5 +1,5 @@
 import {createClient} from "@libsql/client";
-import {ApiError} from "../utils/apiError.ts";
+import {ApiError} from "../utils/apiError.js";
 
 const TURSO_DB_URL = process.env.TURSO_DB_URL;
 const TURSO_AUTH_TOKEN = process.env.TURSO_AUTH_TOKEN;

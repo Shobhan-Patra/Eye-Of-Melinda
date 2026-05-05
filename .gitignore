@@ -3,3 +3,9 @@
 node_modules/
 *.json
 uploads/
+dist/
+
+# Auto-generated TS artifacts (just in case)
+*.js
+*.d.ts
+*.js.map

@@ -1,7 +1,6 @@
 export const connection = {
-    host: process.env.REDIS_HOST,
-    port: Number(process.env.REDIS_PORT),
-    password: process.env.REDIS_PASSWORD,
+    url: process.env.REDIS_URL,
     tls: {},
+    maxRetriesPerRequest: null,
     enableOfflineQueue: false
 };

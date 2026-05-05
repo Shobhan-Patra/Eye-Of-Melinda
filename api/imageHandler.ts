@@ -1,10 +1,10 @@
 import type {NextFunction, Request, Response} from "express";
-import {ApiResponse} from "../utils/apiResponse.ts";
-import getHash from "../utils/fileHasher.ts";
+import {ApiResponse} from "../utils/apiResponse.js";
+import getHash from "../utils/fileHasher.js";
 import {Storage} from '@google-cloud/storage';
-import {ApiError} from "../utils/apiError.ts";
-import {db} from "../db/db.ts";
-import imageProcessingJobQueue from "../queue/queue.ts";
+import {ApiError} from "../utils/apiError.js";
+import {db} from "../db/db.js";
+import imageProcessingJobQueue from "../queue/queue.js";
 import {uuid as v4} from "uuidv4";
 import path from "path";
 import * as fs from "node:fs";
@@ -18,16 +18,16 @@ const storage = new Storage({
 
 async function getSignedDownloadURL(imageHash: string, fileExt: string) {
     const options = {
-        version: 'v4',
-        action: 'read',
+        version: 'v4' as const,
+        action: 'read' as const,
         expires: Date.now() + 30 * 60 * 1000, // 30 minutes
     };
 
     // Get a v4 signed URL for reading the file
     const fileName = imageHash + fileExt;
-    const url = await storage.bucket(bucketName).file(fileName).getSignedUrl(options);
+    const [url] = await storage.bucket(bucketName).file(fileName).getSignedUrl(options);
 
-    return url[0];
+    return url;
 }
 
 async function uploadFile(fileName: string) {
@@ -69,10 +69,16 @@ const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
 
         // Image is being processed
         const existingJob = await imageProcessingJobQueue.getJob(imageHash);
-        if (existingImage || existingJob) {
-            return res.status(202).json(
-                new ApiResponse(202, { imageHash: imageHash, jobId: imageHash }, "Image is already in the processing queue")
-            );
+        if (existingJob) {
+            const state = await existingJob.getState();
+            // If job is active or waiting, just tell the user to wait
+            if (['active', 'waiting', 'delayed'].includes(state)) {
+                return res.status(202).json(new ApiResponse(202, { jobId: imageHash }, "Still processing..."));
+            }
+
+            if (state === 'failed') {
+                await existingJob.remove();
+            }
         }
 
         // New Image

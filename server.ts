@@ -1,5 +1,5 @@
-import app from './index.ts';
-import {initializeDB} from "./db/db.ts";
+import app from './index.js';
+import {initializeDB} from "./db/db.js";
 
 const PORT = process.env.PORT || 8000;
 
