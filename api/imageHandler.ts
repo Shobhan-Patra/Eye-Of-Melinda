@@ -11,10 +11,16 @@ import * as fs from "node:fs";
 const bucketName = process.env.BUCKET_NAME!;
 
 // Creates a client
-const storage = new Storage({
-    projectId: process.env.BUCKET_PROJECT_ID!,
-    keyFilename: process.env.BUCKET_KEY_FILENAME!,
-});
+let storage: Storage;
+if (process.env.NODE_ENV === "production") {
+    storage = new Storage();
+}
+else {
+    storage = new Storage({
+        projectId: process.env.BUCKET_PROJECT_ID!,
+        keyFilename: process.env.BUCKET_KEY_FILENAME!,
+    });
+}
 
 async function getSignedDownloadURL(imageHash: string, fileExt: string) {
     const options = {
@@ -31,7 +37,7 @@ async function getSignedDownloadURL(imageHash: string, fileExt: string) {
 }
 
 async function uploadFile(fileName: string) {
-    const filePath = `uploads/${fileName}`;
+    const filePath = `/tmp/${fileName}`;
     const destinationFileName = await getHash(filePath) + path.extname(filePath); // hash the image file to reduce redundant checks later
 
     const options = {
@@ -50,7 +56,7 @@ const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
 
     try {
         // Compute image hash
-        const localImagePath = path.join('uploads', file.filename);
+        const localImagePath = path.join('/tmp', file.filename);
         const imageHash = await getHash(localImagePath) || "";
 
         const { rows } = await db.execute('SELECT id, caption FROM images WHERE hash_value = ?', [imageHash]);
@@ -94,7 +100,7 @@ const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
         fs.unlinkSync(localImagePath); // delete local image
 
         // update DB
-        await db.execute(`INSERT INTO images (id, hash_value, url) VALUES (?, ?, ?); `, [newImage.id, newImage.hash_value, newImage.url]);
+        await db.execute(`INSERT INTO images (id, hash_value) VALUES (?, ?); `, [newImage.id, newImage.hash_value]);
 
         // add new job to processing queue
         const job = await imageProcessingJobQueue.add("captioning",

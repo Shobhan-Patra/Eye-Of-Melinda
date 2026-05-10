@@ -5,7 +5,7 @@ import {ApiError} from "../utils/apiError.js";
 
 const storage = multer.diskStorage({
     destination: function (req: Request, file, cb) {
-        cb(null, 'uploads/');
+        cb(null, '/tmp');
     },
     filename: function (req: Request, file, cb) {
         cb(null,  file.originalname);

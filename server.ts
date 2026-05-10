@@ -6,6 +6,8 @@ const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, async () => {
     await initializeDB();
-    createUploadsDir();
+    if (process.env.NODE_ENV !== "production") {
+        createUploadsDir();
+    }
     console.log(`Listening at http://localhost:${PORT}`);
 });
