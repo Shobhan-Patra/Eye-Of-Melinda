@@ -5,7 +5,7 @@ import {Storage} from '@google-cloud/storage';
 import {ApiError} from "../utils/apiError.js";
 import {db} from "../db/db.js";
 import imageProcessingJobQueue from "../queue/queue.js";
-import {uuid as v4} from "uuidv4";
+import {v4 as uuidv4} from "uuid";
 import path from "path";
 import * as fs from "node:fs";
 const bucketName = process.env.BUCKET_NAME!;
@@ -85,7 +85,7 @@ const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
         await uploadFile(file.filename); // upload file to GCS
 
         const newImage = {
-            id: v4(),
+            id: uuidv4(),
             name: file.filename,
             hash_value: imageHash,
             url: await getSignedDownloadURL(imageHash, path.extname(file.filename))

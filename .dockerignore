@@ -1,5 +1,5 @@
 .idea/
 *.env
 node_modules/
-*.json
+eye-of-melinda-*.json
 uploads/
