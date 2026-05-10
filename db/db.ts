@@ -20,7 +20,6 @@ const initializeDB = async () => {
                 id TEXT PRIMARY KEY,
                 hash_value TEXT NOT NULL,
                 caption TEXT,
-                url TEXT NOT NULL,
                 uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
              );`
         );
