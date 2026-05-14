@@ -9,7 +9,7 @@ spec:
     spec:
       containers:
         # The Server
-        - image: gcr.io/PROJECT_ID/app-image
+        - image: asia-south1-docker.pkg.dev/eye-of-melinda/backend-repo/eye-of-melinda
           name: server
           command: ["npm", "run", "start:server"]
           ports:
@@ -44,7 +44,7 @@ spec:
               value: "production"
 
         # The Worker
-        - image: gcr.io/PROJECT_ID/app-image
+        - image: asia-south1-docker.pkg.dev/eye-of-melinda/backend-repo/eye-of-melinda
           name: worker
           command: ["npm", "run", "start:worker"]
           env:
