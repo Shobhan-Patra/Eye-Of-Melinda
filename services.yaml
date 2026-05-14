@@ -1,0 +1,70 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: my-app-stack
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    spec:
+      containers:
+        # The Server
+        - image: gcr.io/PROJECT_ID/app-image
+          name: server
+          command: ["npm", "run", "start:server"]
+          ports:
+            - containerPort: 8080
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: REDIS_URL
+                  key: latest
+            - name: BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: BUCKET_NAME
+                  key: latest
+            - name: TURSO_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: TURSO_DB_URL
+                  key: latest
+            - name: TURSO_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: TURSO_AUTH_TOKEN
+                  key: latest
+            - name: FRONTEND_URL
+              valueFrom:
+                secretKeyRef:
+                  name: FRONTEND_URL
+                  key: latest
+            - name: NODE_ENV
+              value: "production"
+
+        # The Worker
+        - image: gcr.io/PROJECT_ID/app-image
+          name: worker
+          command: ["npm", "run", "start:worker"]
+          env:
+            - name: MODEL_SERVICE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: MODEL_SERVICE_URL
+                  key: latest
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: REDIS_URL
+                  key: latest
+            - name: TURSO_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: TURSO_DB_URL
+                  key: latest
+            - name: TURSO_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: TURSO_AUTH_TOKEN
+                  key: latest

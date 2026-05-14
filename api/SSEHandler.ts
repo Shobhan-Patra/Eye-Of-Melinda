@@ -27,21 +27,20 @@ const SSEHandler = async function (req: Request, res: Response, next: NextFuncti
     if (finishedJob) {
         const state = await finishedJob.getState() || "";
         if (state === "completed") {
-            sendUpdate({ status: "completed", result: finishedJob.data });
+            sendUpdate({ status: "completed", result: finishedJob.returnvalue });
             cleanup();
         }
     }
 
-
     // Listen for BullMQ completion
-    const onCompleted = ({ jobId: id, returnvalue }: { jobId: string, returnvalue: any }) => {
+    function onCompleted({ jobId: id, returnvalue }: { jobId: string, returnvalue: any }) {
         if (id === jobId) {
             sendUpdate({ status: "completed", result: returnvalue });
             cleanup();
         }
-    };
+    }
 
-    const onFailed = ({ jobId: id, failedReason }: { jobId: string, failedReason: string }) => {
+    function onFailed ({ jobId: id, failedReason }: { jobId: string, failedReason: string }) {
         if (id === jobId) {
             sendUpdate({ status: "failed", error: failedReason });
             cleanup();

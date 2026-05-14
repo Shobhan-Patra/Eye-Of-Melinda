@@ -1,0 +1,19 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/eye-of-melinda', '.']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/eye-of-melinda']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'services'
+      - 'replace'
+      - 'services.yaml'
+      - '--region'
+      - 'asia-south1'
+
+images:
+  - 'gcr.io/$PROJECT_ID/eye-of-melinda'
