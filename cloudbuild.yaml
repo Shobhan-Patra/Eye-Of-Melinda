@@ -1,10 +1,13 @@
 steps:
+  # Build image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/eye-of-melinda', '.']
+    args: ['build', '-t', 'asia-south1-docker.pkg.dev/$PROJECT_ID/backend-repo/eye-of-melinda', '.']
 
+  # Push to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/eye-of-melinda']
+    args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/backend-repo/eye-of-melinda']
 
+  # Deploy using services.yaml
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -16,7 +19,7 @@ steps:
       - 'asia-south1'
 
 images:
-  - 'gcr.io/$PROJECT_ID/eye-of-melinda'
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/backend-repo/eye-of-melinda'
 
 options:
   logging: CLOUD_LOGGING_ONLY
