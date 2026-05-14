@@ -17,3 +17,6 @@ steps:
 
 images:
   - 'gcr.io/$PROJECT_ID/eye-of-melinda'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
